@@ -69,7 +69,7 @@ describe('MrConsumer', () => {
     messageCheckHelperSpy.mockRestore();
   });
 
-  describe('when message is not provided', () => {
+  describe('when message is not sent', () => {
     it('should not call handleMessage', async () => {
       let consumeCallback: ((msg: any) => void) | null = null;
 
