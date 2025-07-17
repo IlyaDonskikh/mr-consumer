@@ -1,8 +1,8 @@
-import { BasePublisher } from './samples/base.publisher';
+import { BaseConsumer } from './samples/base.consumer';
 import { faker } from '@faker-js/faker';
 import amqp from 'amqplib';
-import { NoChannelPublisher } from './samples/noChannel.publisher';
-import { NoQueueNamePublisher } from './samples/noQueueName.publisher';
+import { NoChannelConsumer } from './samples/noChannel.consumer';
+import { NoQueueNameConsumer } from './samples/noQueueName.consumer';
 
 // Mock amqplib
 jest.mock('amqplib', () => ({
@@ -12,13 +12,18 @@ jest.mock('amqplib', () => ({
   },
 }));
 
-describe('MrPublisher', () => {
+describe('MrConsumer', () => {
   it('success', async () => {
     const text = faker.lorem.word();
     const payload = { text };
+    let consumeCallback: ((msg: any) => void) | null = null;
+
     const mockChannel = {
       assertQueue: jest.fn().mockResolvedValue(undefined),
-      sendToQueue: jest.fn(),
+      consume: jest.fn().mockImplementation((queueName, callback) => {
+        consumeCallback = callback;
+      }),
+      ack: jest.fn(),
     };
 
     const mockConnection = {
@@ -27,38 +32,97 @@ describe('MrPublisher', () => {
 
     (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
-    await BasePublisher.publish({ payload });
+    // Spy on messageCheckHelper
+    const messageCheckHelperSpy = jest.spyOn(
+      BaseConsumer.prototype,
+      'messageCheckHelper',
+    );
+
+    await BaseConsumer.consume();
 
     // Verify the mocks were called correctly
     expect(amqp.connect).toHaveBeenCalled();
     expect(mockConnection.createChannel).toHaveBeenCalled();
-    expect(mockChannel.assertQueue).toHaveBeenCalledWith('base.publisher', {
+    expect(mockChannel.assertQueue).toHaveBeenCalledWith('consumer.queue', {
       durable: true,
     });
-    expect(mockChannel.sendToQueue).toHaveBeenCalledWith(
-      'base.publisher',
-      Buffer.from(JSON.stringify(payload)),
+    expect(mockChannel.consume).toHaveBeenCalledWith(
+      'consumer.queue',
+      expect.any(Function),
     );
+
+    // Simulate a message being received
+    const mockMessage = {
+      content: Buffer.from(JSON.stringify(payload)),
+    };
+
+    // Since handleMessage does not throw anymore, just call the callback
+    await consumeCallback!(mockMessage);
+
+    // Ensure messageCheckHelper was called with the correct argument
+    expect(messageCheckHelperSpy).toHaveBeenCalledWith({ message: payload });
+
+    // Ensure that ack is called
+    expect(mockChannel.ack).toHaveBeenCalled();
+
+    // Clean up the spy
+    messageCheckHelperSpy.mockRestore();
+  });
+
+  describe('when message is not provided', () => {
+    it('should not call handleMessage', async () => {
+      let consumeCallback: ((msg: any) => void) | null = null;
+
+      const mockChannel = {
+        assertQueue: jest.fn().mockResolvedValue(undefined),
+        consume: jest.fn().mockImplementation((queueName, callback) => {
+          consumeCallback = callback;
+        }),
+        ack: jest.fn(),
+      };
+
+      const mockConnection = {
+        createChannel: jest.fn().mockResolvedValue(mockChannel),
+      };
+
+      (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
+
+      // Spy on handleMessage to ensure it's not called
+      const handleMessageSpy = jest.spyOn(
+        BaseConsumer.prototype,
+        'handleMessage',
+      );
+
+      await BaseConsumer.consume();
+
+      // Simulate a message being received with null content (results in falsy message)
+      const mockMessage = {
+        content: Buffer.from('null'),
+      };
+
+      // Call the callback with null message
+      await consumeCallback!(mockMessage);
+
+      // Ensure handleMessage was NOT called because message is null
+      expect(handleMessageSpy).not.toHaveBeenCalled();
+
+      // Clean up the spy
+      handleMessageSpy.mockRestore();
+    });
   });
 
   describe('when setupChannel method is not implemented', () => {
     it('should throw an error', () => {
-      const text = faker.lorem.word();
-      const payload = { text };
-
-      expect(NoChannelPublisher.publish({ payload })).rejects.toThrow(
-        '[MrPublisher][setupChannel] Method not implemented',
+      expect(NoChannelConsumer.consume()).rejects.toThrow(
+        '[MrConsumer][setupChannel] Method not implemented',
       );
     });
   });
 
   describe('when queue name is not provided', () => {
     it('should throw an error', () => {
-      const text = faker.lorem.word();
-      const payload = { text };
-
-      expect(NoQueueNamePublisher.publish({ payload })).rejects.toThrow(
-        '[MrPublisher][validateQueueName] Queue name is required',
+      expect(NoQueueNameConsumer.consume()).rejects.toThrow(
+        '[MrConsumer][validateQueueName] Queue name is required',
       );
     });
   });
