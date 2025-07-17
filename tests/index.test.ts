@@ -3,6 +3,7 @@ import { faker } from '@faker-js/faker';
 import amqp from 'amqplib';
 import { NoChannelConsumer } from './samples/noChannel.consumer';
 import { NoQueueNameConsumer } from './samples/noQueueName.consumer';
+import { NoHandleMessageConsumer } from './samples/noHandeMessage.consumer';
 
 // Mock amqplib
 jest.mock('amqplib', () => ({
@@ -108,6 +109,39 @@ describe('MrConsumer', () => {
 
       // Clean up the spy
       handleMessageSpy.mockRestore();
+    });
+  });
+
+  describe('when handleMessage method is not implemented', () => {
+    it('should throw an error', async () => {
+      let consumeCallback: ((msg: any) => void) | null = null;
+
+      const mockChannel = {
+        assertQueue: jest.fn().mockResolvedValue(undefined),
+        consume: jest.fn().mockImplementation((queueName, callback) => {
+          consumeCallback = callback;
+        }),
+        ack: jest.fn(),
+      };
+
+      const mockConnection = {
+        createChannel: jest.fn().mockResolvedValue(mockChannel),
+      };
+
+      (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
+
+      // Start consuming
+      await NoHandleMessageConsumer.consume();
+
+      // Simulate a message being received to trigger handleMessage
+      const mockMessage = {
+        content: Buffer.from(JSON.stringify({ text: 'test' })),
+      };
+
+      // This should throw the error from handleMessage
+      await expect(consumeCallback!(mockMessage)).rejects.toThrow(
+        '[MrConsumer][handleMessage] Method not implemented',
+      );
     });
   });
 

@@ -17,7 +17,6 @@ export function MrConsumer<R extends object, Q extends string>() {
     message: R;
     queueName: Q;
 
-
     static async consume() {
       return new this().consume();
     }
@@ -40,13 +39,13 @@ export function MrConsumer<R extends object, Q extends string>() {
     }
 
     async consumeMessage() {
-      if (!this.message)  return;
+      if (!this.message) return;
 
       await this.handleMessage();
     }
 
     async handleMessage() {
-      throw new Error('[Consumer][handleMessage] Method not implemented.');
+      throw new Error('[MrConsumer][handleMessage] Method not implemented');
     }
 
     async attachChannel() {
@@ -60,9 +59,7 @@ export function MrConsumer<R extends object, Q extends string>() {
     validateQueueName() {
       if (this.queueName) return;
 
-      throw new Error(
-        '[MrConsumer][validateQueueName] Queue name is required',
-      );
+      throw new Error('[MrConsumer][validateQueueName] Queue name is required');
     }
 
     async setupChannel(): Promise<Channel> {
