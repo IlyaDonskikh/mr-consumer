@@ -1,0 +1,58 @@
+{
+  "name": "mr-consumer",
+  "version": "0.1.1",
+  "description": "Effortlessly consume your data from RabbitMQ with a clean.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "build": "del dist && tsc --project tsconfig.production.json",
+    "build:check": "tsc --noEmit --project tsconfig.production.json",
+    "dot-only-hunter": "dot-only-hunter tests",
+    "deploy": "npm run dot-only-hunter && npm run test:coverage && npm run build && npm publish"
+  },
+  "keywords": [
+    "consumer",
+    "rabbitmq",
+    "amqp",
+    "amqplib",
+    "typescript",
+    "nodejs",
+    "node",
+    "javascript",
+    "typescript"
+  ],
+  "author": "Ilia Donskikh",
+  "license": "ISC",
+  "devDependencies": {
+    "@faker-js/faker": "^9.9.0",
+    "@jest/globals": "^30.0.4",
+    "@types/amqplib": "^0.10.7",
+    "@types/jest": "^27.4.0",
+    "@types/node": "^17.0.8",
+    "amqplib": "^0.10.8",
+    "del-cli": "^6.0.0",
+    "dot-only-hunter": "^1.0.3",
+    "jest": "^30.0.4",
+    "jest-util": "^30.0.2",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/IlyaDonskikh/mr-consumer.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IlyaDonskikh/mr-consumer/issues"
+  },
+  "homepage": "https://github.com/IlyaDonskikh/mr-consumer#readme",
+}
