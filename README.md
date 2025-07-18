@@ -112,12 +112,12 @@ export class SampleMessageCreatedConsumer extends Consumer<ConsumerResponse>() {
 
   async handlePayload() {
     // Process the received message
-    const { message } = this.message;
+    const { message } = this.payload;
     // Your business logic here
-    await this.processMessage(message);
+    await this.processMessage({ message });
   }
 
-  private async processMessage(message: { uuid: string }) {
+  private async processMessage({ message }: { message: { uuid: string } }) {
     // Implement your message processing logic
     // For example: save to database, send notifications, etc.
   }
