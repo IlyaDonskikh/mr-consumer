@@ -1,20 +1,19 @@
-import { R } from '@faker-js/faker/dist/airline-CLphikKp';
 import { Channel } from 'amqplib';
 
 // have to define interface because declaration option is true
-export interface MrConsumerInterface<R, Q> {
+export interface MrConsumerInterface<P, Q> {
   new (): {
     queueName: Q;
-    message: R;
-    handleMessage(): Promise<void>;
+    payload: P;
+    handlePayload(): Promise<void>;
   };
   consume(): Promise<void>;
 }
 
-export function MrConsumer<R extends object, Q extends string>() {
+export function MrConsumer<P extends object, Q extends string>() {
   return class BasePublisher {
     channel: Channel;
-    message: R;
+    payload: P;
     queueName: Q;
 
     static async consume() {
@@ -29,23 +28,23 @@ export function MrConsumer<R extends object, Q extends string>() {
 
       await this.channel.consume(this.queueName, async (msg) => {
         if (msg) {
-          this.message = JSON.parse(msg.content.toString());
+          this.payload = JSON.parse(msg.content.toString());
 
-          await this.consumeMessage();
+          await this.consumePayload();
 
           this.channel.ack(msg);
         }
       });
     }
 
-    async consumeMessage() {
-      if (!this.message) return;
+    async consumePayload() {
+      if (!this.payload) return;
 
-      await this.handleMessage();
+      await this.handlePayload();
     }
 
-    async handleMessage() {
-      throw new Error('[MrConsumer][handleMessage] Method not implemented');
+    async handlePayload() {
+      throw new Error('[MrConsumer][handlePayload] Method not implemented');
     }
 
     async attachChannel() {

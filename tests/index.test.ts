@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import amqp from 'amqplib';
 import { NoChannelConsumer } from './samples/noChannel.consumer';
 import { NoQueueNameConsumer } from './samples/noQueueName.consumer';
-import { NoHandleMessageConsumer } from './samples/noHandeMessage.consumer';
+import { NohandlePayloadConsumer } from './samples/noHandeMessage.consumer';
 
 // Mock amqplib
 jest.mock('amqplib', () => ({
@@ -33,10 +33,10 @@ describe('MrConsumer', () => {
 
     (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
-    // Spy on messageCheckHelper
-    const messageCheckHelperSpy = jest.spyOn(
+    // Spy on payloadCheckHelper
+    const payloadCheckHelperSpy = jest.spyOn(
       BaseConsumer.prototype,
-      'messageCheckHelper',
+      'payloadCheckHelper',
     );
 
     await BaseConsumer.consume();
@@ -57,21 +57,21 @@ describe('MrConsumer', () => {
       content: Buffer.from(JSON.stringify(payload)),
     };
 
-    // Since handleMessage does not throw anymore, just call the callback
+    // Since handlePayload does not throw anymore, just call the callback
     await consumeCallback!(mockMessage);
 
-    // Ensure messageCheckHelper was called with the correct argument
-    expect(messageCheckHelperSpy).toHaveBeenCalledWith({ message: payload });
+    // Ensure payloadCheckHelper was called with the correct argument
+    expect(payloadCheckHelperSpy).toHaveBeenCalledWith({ payload });
 
     // Ensure that ack is called
     expect(mockChannel.ack).toHaveBeenCalled();
 
     // Clean up the spy
-    messageCheckHelperSpy.mockRestore();
+    payloadCheckHelperSpy.mockRestore();
   });
 
   describe('when message is not sent', () => {
-    it('should not call handleMessage', async () => {
+    it('should not call handlePayload', async () => {
       let consumeCallback: ((msg: any) => void) | null = null;
 
       const mockChannel = {
@@ -88,10 +88,10 @@ describe('MrConsumer', () => {
 
       (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
-      // Spy on handleMessage to ensure it's not called
-      const handleMessageSpy = jest.spyOn(
+      // Spy on handlePayload to ensure it's not called
+      const handlePayloadSpy = jest.spyOn(
         BaseConsumer.prototype,
-        'handleMessage',
+        'handlePayload',
       );
 
       await BaseConsumer.consume();
@@ -104,15 +104,15 @@ describe('MrConsumer', () => {
       // Call the callback with null message
       await consumeCallback!(mockMessage);
 
-      // Ensure handleMessage was NOT called because message is null
-      expect(handleMessageSpy).not.toHaveBeenCalled();
+      // Ensure handlePayload was NOT called because message is null
+      expect(handlePayloadSpy).not.toHaveBeenCalled();
 
       // Clean up the spy
-      handleMessageSpy.mockRestore();
+      handlePayloadSpy.mockRestore();
     });
   });
 
-  describe('when handleMessage method is not implemented', () => {
+  describe('when handlePayload method is not implemented', () => {
     it('should throw an error', async () => {
       let consumeCallback: ((msg: any) => void) | null = null;
 
@@ -131,16 +131,16 @@ describe('MrConsumer', () => {
       (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
       // Start consuming
-      await NoHandleMessageConsumer.consume();
+      await NohandlePayloadConsumer.consume();
 
-      // Simulate a message being received to trigger handleMessage
+      // Simulate a message being received to trigger handlePayload
       const mockMessage = {
         content: Buffer.from(JSON.stringify({ text: 'test' })),
       };
 
-      // This should throw the error from handleMessage
+      // This should throw the error from handlePayload
       await expect(consumeCallback!(mockMessage)).rejects.toThrow(
-        '[MrConsumer][handleMessage] Method not implemented',
+        '[MrConsumer][handlePayload] Method not implemented',
       );
     });
   });

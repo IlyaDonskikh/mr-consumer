@@ -19,12 +19,12 @@ export class BaseConsumer extends MrConsumer<
     return createChannel();
   }
 
-  async handleMessage() {
-    this.messageCheckHelper({ message: this.message });
+  async handlePayload() {
+    this.payloadCheckHelper({ payload: this.payload });
   }
 
-  async messageCheckHelper({ message }: { message: ConsumerResponse }) {
-    void message;
+  async payloadCheckHelper({ payload }: { payload: ConsumerResponse }) {
+    void payload;
   }
 }
 

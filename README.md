@@ -110,7 +110,7 @@ interface ConsumerResponse {
 export class SampleMessageCreatedConsumer extends Consumer<ConsumerResponse>() {
   queueName = MessageBrokerQueue.coreMessageCreated;
 
-  async handleMessage() {
+  async handlePayload() {
     // Process the received message
     const { message } = this.message;
     // Your business logic here

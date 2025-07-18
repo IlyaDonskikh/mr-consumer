@@ -9,7 +9,7 @@ enum MessageBrokerQueue {
   consumerQueue = 'consumer.queue',
 }
 
-export class NoHandleMessageConsumer extends MrConsumer<
+export class NohandlePayloadConsumer extends MrConsumer<
   ConsumerResponse,
   MessageBrokerQueue
 >() {
